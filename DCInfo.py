@@ -99,7 +99,7 @@ class DCInfo(loader.Module):
                 entity = await reply.get_sender() or await reply.get_chat()
             else:
                 entity = await client.get_me()
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.debug("DCInfo: не удалось получить аккаунт", exc_info=True)
 
         if entity is None:
@@ -182,7 +182,7 @@ class DCInfo(loader.Module):
                 dc = getattr(getattr(full.full_chat, "chat_photo", None), "dc_id", None)
                 if dc:
                     return dc
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.debug("DCInfo: полный профиль недоступен", exc_info=True)
 
         return None
