@@ -1,13 +1,26 @@
-# meta developer: @your_nick
-#
-# DCInfo — показывает дата-центр (DC1…DC5) аккаунта Telegram.
-#
-#   .dc               — ответом на сообщение (свайп) -> DC автора сообщения
-#   .dc @username     — по юзернейму (можно и ссылку t.me/username, и числовой ID)
-#   .dc               — без ответа и аргументов -> твой собственный DC
-#
-# Telegram отдаёт DC только через фото профиля: если у аккаунта нет фото
-# (или оно скрыто настройками приватности), определить DC нельзя.
+# meta developer: @JavaScript_XD
+# scope: hikka_min 1.6.0
+# requires:
+
+"""
+⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀
+⡀⢠⠋⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⢷⡀⡀
+⢀⡟⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⢀⡀⡀⡀⡀⡀⡀⡀⡀⡀⢀⣤⠶⡀⡀⣷⡀
+⢸⠁⡀⡀⡀⡀⡀⣿⡇⡀⡀⡀⡀⡀⡀⢀⡿⠁⣠⡀⡀⣿⡀⡀⡀⣀⡴⠛⠁⡀⡀⡀⡀⢹⡀
+⢸⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⣿⡀⡀⣿⡀⡀⡀⠉⠳⣤⡀⡀⡀⡀⡀⢸⡀
+⠘⣇⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⢿⣤⣶⠹⣦⣴⠏⡀⡀⡀⡀⡀⡀⠈⠛⠦⡀⡀⣿⡀
+⡀⠻⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⣰⠃⡀
+⡀⡀⠁⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀⡀
+
+                                   Made by @JavaScript_XD
+                                   Idea by @zehyrny
+                                   Channel: https://t.me/plugin_XD
+                                   Version: 1.0.0
+                                   Created: 26.10.2026
+                                   Updated: 26.10.2026
+"""
+
+# meta version: 1.0.0
 
 import html
 import importlib
@@ -18,7 +31,6 @@ from .. import loader, utils
 
 logger = logging.getLogger(__name__)
 
-# Расположение дата-центров Telegram (по общеизвестным данным сообщества)
 DC_PLACES = {
     1: "Майами 🇺🇸",
     2: "Амстердам 🇳🇱",
@@ -29,7 +41,6 @@ DC_PLACES = {
 
 
 def _import_tl():
-    """Находит пакет Telethon-форка: у Heroku это herokutl, у Hikka — hikkatl."""
     for root in ("herokutl", "hikkatl", "telethon"):
         try:
             return (
@@ -51,7 +62,6 @@ def esc(value) -> str:
 
 @loader.tds
 class DCInfo(loader.Module):
-    """Показывает дата-центр (DC) аккаунта Telegram"""
 
     strings = {
         "name": "DCInfo",
@@ -70,13 +80,9 @@ class DCInfo(loader.Module):
         ),
     }
 
-    # ------------------------------------------------------------------ #
-    #                              КОМАНДА                               #
-    # ------------------------------------------------------------------ #
 
     @loader.command()
     async def dc(self, message):
-        """[ответом на сообщение | @username | ID] — показать DC аккаунта"""
         client = message.client
         args = utils.get_args_raw(message).strip()
         reply = await message.get_reply_message()
@@ -117,13 +123,9 @@ class DCInfo(loader.Module):
 
         await utils.answer(status, text)
 
-    # ------------------------------------------------------------------ #
-    #                          ВСПОМОГАТЕЛЬНОЕ                           #
-    # ------------------------------------------------------------------ #
 
     @staticmethod
     async def _resolve(client, arg: str):
-        """@username, username, ссылка t.me/..., числовой ID."""
         arg = arg.split()[0]
         arg = re.sub(r"^(?:https?://)?(?:t|telegram)\.me/", "", arg).strip("/")
         arg = arg.split("?")[0]
@@ -133,7 +135,6 @@ class DCInfo(loader.Module):
 
     @staticmethod
     def _describe(entity):
-        """Возвращает (иконка, кликабельное имя)."""
         kind = type(entity).__name__
         username = getattr(entity, "username", None)
 
@@ -156,9 +157,7 @@ class DCInfo(loader.Module):
         return icon, esc(title)
 
     async def _find_dc(self, client, entity):
-        """DC берётся из фото профиля. Если в кэшированной сущности его нет — запрашиваем полный профиль."""
         photo = getattr(entity, "photo", None)
-        # personal=True — это фото, поставленное мной контакту; его DC может не совпадать с DC аккаунта
         if photo is not None and not getattr(photo, "personal", False):
             dc = getattr(photo, "dc_id", None)
             if dc:
